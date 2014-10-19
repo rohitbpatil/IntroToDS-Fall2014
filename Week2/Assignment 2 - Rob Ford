@@ -1,0 +1,108 @@
+###Assignment 1###
+# Using R Data Preparation
+# a. Get Indian Liver Patient Dataset:
+url <- "http://archive.ics.uci.edu/ml/machine-learning-databases/00225/Indian%20Liver%20Patient%20Dataset%20(ILPD).csv"
+url
+ILPD <- read.csv(url, header=FALSE, stringsAsFactors=FALSE) 
+head(ILPD)
+# b. Get the column headers from:  http://archive.ics.uci.edu/ml/datasets/ILPD+(Indian+Liver+Patient+Dataset)
+# c. Manually construct the headers
+header<-c("age", "gender", "total_bilirubin", "direct_bilirubin", "total_proteins", "albumin", "aG_ratio", "SGPT", "SGOT", "Alkphos", "selector")
+# d. attach the names to the headers
+names(ILPD) <- header
+
+###Assignment 2###
+#a.  Use head(ILPD) to view the first 6 rows
+head(ILPD)
+#b.  Determine the mean, median, and standard deviation (sd) of each column.
+sd(ILPD[, 1])
+mean(ILPD[, 1])
+median(ILPD[, 1])
+
+ILPD$gender <- NULL
+ILPD$Alkphos <- as.numeric(ILPD$Alkphos)
+
+mms.df <- data.frame(mean = sapply(ILPD,mean,na.rm=TRUE),median = sapply(ILPD,median,na.rm=TRUE),sd = sapply(ILPD,sd,na.rm=TRUE))
+mms.df
+
+#c.  What does na.rm = TRUE do in sd(x, na.rm = TRUE)?
+#Answer: It ignores all the NA's if values in the vector are missing.
+
+#d.  Create Histograms (hist) for each column where possible.  
+hist(ILPD$age, col=rgb(0,1,0,.5))
+hist(ILPD$total_Bilirubin, col=rgb(0,1,0,.5))
+hist(ILPD$direct_Bilirubin, col=rgb(0,1,0,.5))
+hist(ILPD$total_proteins, col=rgb(0,1,0,.5))
+hist(ILPD$albumin, col=rgb(0,1,0,.5))
+hist(ILPD$A-G_ratio, col=rgb(0,1,0,.5))
+hist(ILPD$SGPT, col=rgb(0,1,0,.5))
+hist(ILPD$SGOT, col=rgb(0,1,0,.5))
+hist(ILPD$Alkphos, col=rgb(0,1,0,.5))
+hist(ILPD$Selector, col=rgb(0,1,0,.5))
+#hist(ILPD$gender, col=rgb(0,1,0,.5))
+
+#e.  Use the plot(ILPD) function on this data frame to present a general overview of the data.  
+#You want to see a matrix of many plots.  Your efforts may be thwarted because the Gender column 
+#is not numeric.  You can skip the Gender column, or 
+#you can turn the gender column into a numeric column.  
+#You might need help from a fellow student, the LinkedIn group, or me.  
+
+#convert gender into numeric so that i can run plot()
+head(ILPD)
+ILPD$gender <-- ifelse(ILPD$gender == "male",1,0)
+plot(ILPD)
+
+#Look at the plots and answer: 
+  #a.	What can you say about the data?
+      #Answer: total_billrubin & direct_billrubin, albumin & aG_ratio, are strongly correlated. SGPT and SGOT appear to have a high correlation with gender.
+  #b.	How can you tell if a vector contains continuous numbers or binary data?
+      #Answer: it's easy to spot the binary fields,they form a straight vertical or horizontal line.
+  #c.	How can you tell if two vectors are correlated?
+      #Answer: Two vectors form a cohesive diagonal line if correlated. Less correlated vectors bunch up.Difficult to determine the correlation of the categorical variables.
+
+
+###Assignment 3###
+  #a.  Remove Outliers:  c(-1, 1, 5, 1,  1, 17, -3, 1, 1, 3)
+numOut.data <-c (1, 1, 5, 1,  1, 17, -3, 1, 1, 3)
+
+numOut.data
+
+numOut.data <- numOut.data[(numOut.data < mean(numOut.data) + 2*sd(numOut.data)) & (numOut.data >  mean(numOut.data) - 2*sd(numOut.data))]
+
+numOut.data
+  #b.  Relabel: c('BS', 'MS', 'PhD', 'HS', 'Bachelors', 'Masters', 'High School', 'BS', 'MS', 'MS')
+abbr.data<- c('BS', 'MS', 'PhD', 'HS', 'Bachelors', 'Masters', 'High School', 'BS', 'MS', 'MS')
+
+abbr.data
+
+abbr.data [abbr.data == 'Bachelors'] <- 'BS'
+abbr.data [abbr.data == 'Masters'] <- 'MS'
+abbr.data [abbr.data == 'High School'] <- 'HS'
+
+abbr.data
+
+#c. Normalize: c(-1, 1, 5, 1, 1, 17, -3, 1, 1, 3)
+  norm.data <- c(-1, 1, 5, 1, 1, 17, -3, 1, 1, 3)
+  #.a - Min-Max Normalization
+  minMax.data <-(norm.data-min(norm.data))/(max(norm.data)-min(norm.data))
+  minMax.data
+#b - Z-score normalization
+zscore.data <- scale(norm.data)[,1]
+zscore.data
+
+#d Binarize: c('Red', 'Green', 'Blue', 'Blue', 'Blue', 'Blue', 'Blue', 'Red', 'Green', 'Blue')
+color.vect <-  c('Red', 'Green', 'Blue', 'Blue', 'Blue', 'Blue', 'Blue', 'Red', 'Green', 'Blue')
+binary.data <- data.frame(red=as.numeric(color.vect == "Red"),blue=as.numeric(color.vect == "Blue"),green=as.numeric(color.vect == "Green"))
+binary.data
+
+#e.DiscretizE: c(3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 9, 12, 23,  23, 25, 81)
+discr.vect <-  c(3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 9, 12, 23, 23, 25, 81)
+
+#a. 3 Bins Equal of near equal amounts 
+cut(discr.vect,breaks = 3)
+
+#b.	3 Bins Equal of near equal amounts (Do this by hand. Writing equalization code is tricky)
+discr.vect[1:9] <- "low"
+discr.vect[10:18] <- "Med"
+discr.vect[19:28] <- "Hi"
+discr.vect
