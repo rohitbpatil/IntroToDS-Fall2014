@@ -1,0 +1,149 @@
+# Homework Assignment 2
+# Lucas Pedroza
+# Online Section (but attending in class)
+
+rm(list=ls())
+
+# Problem 1
+# 1.a.a
+# Liver Patient Dataset.  Had to modify URL from posted version
+url <- "http://archive.ics.uci.edu/ml/machine-learning-databases/00225/Indian%20Liver%20Patient%20Dataset%20(ILPD).csv"
+#1.a.b
+ILPD <- read.csv(url,header=FALSE,stringsAsFactors=FALSE)
+
+# 1.b
+# Liver Patient Dataset Headers -> http://archive.ics.uci.edu/ml/datasets/ILPD+(Indian+Liver+Patient+Dataset)
+# 1. Age  Age of the patient 
+# 2. Gender	Gender of the patient 
+# 3. TB	Total Bilirubin 
+# 4. DB	Direct Bilirubin 
+# 5. Alkphos Alkaline Phosphotase 
+# 6. Sgpt Alamine Aminotransferase 
+# 7. Sgot Aspartate Aminotransferase 
+# 8. TP	Total Protiens 
+# 9. ALB	Albumin 
+# 10. A/G Ratio	Albumin and Globulin Ratio 
+# 11. Selector field used to split the data into two sets (labeled by the experts) 
+
+# 1.c.a
+headers <- c("Age","Gender","TB","DB","Alkphos","Sgpt","Sgot","TP","ALB","A/G Ratio","Selector")
+
+# 1.d.a
+names(ILPD) <- headers
+
+# 2.a
+head(ILPD)
+
+# 2.b
+sapply(ILPD, mean)
+sapply(ILPD, median)
+sapply(ILPD, sd)
+
+# 2.c
+?sd
+# sd(x, na.rm = TRUE) will remove missing values before the proceeding
+# with the computation
+
+# 2.d
+
+hist(ILPD$Age)
+hist(ILPD$Gen) #doesn't work
+hist(ILPD$DB)
+hist(ILPD$Alk)
+hist(ILPD$Sgp)
+hist(ILPD$Sgo)
+hist(ILPD$TP)
+hist(ILPD$ALB)
+hist(ILPD$"A/G")
+hist(ILPD$Sel)
+
+# 2.e
+ILPD2 <- ILPD
+# Female assigned a value of 0, Male assigned a value of 1
+for (n in 1:length(ILPD$Gender))
+{
+  if (ILPD[n,2] == "Female") {
+    ILPD2[n,2] <- 0
+  } else if (ILPD[n,2] == "Male") {
+    ILPD2[n,2] <- 1
+  } else {
+    ILPD2[n,2] <- NA
+  }
+}
+
+plot(ILPD2)
+
+# 2.e.a
+# Linear relationships: TB & DB, TP & ALB, ALB & A/G Ratio,
+# In most cases, the Selector field group of 1 has a narrow range around the mean
+# 2.e.b
+# Binary data is represented by points plotted along two horizontal or vertical lines
+# with no data points scattered outside of these lines.
+# 2.e.c
+# Assuming this question is not asking for a calculation:
+# Visually we can see when one attribute increases while another increases
+# or decreases (on average), these are likely correlated.  The exact degree
+# of correlation would be better achieved by calculating the correlation coefficient
+
+# 3.a
+data3 <- c(-1, 1, 5, 1, 1, 17, -3, 1, 1, 3)
+data3.mean <- mean(data3)
+data3.sd <- sd(data3)
+data3.remove <- c()
+
+# The below method doesn't work because no data points lay outside
+# 3 standard deviations. We could choose to lower the number
+# of deviations.  I did not choose to do so.  2.5 would work, though
+for (n in data3) {
+  if (n > (data3.mean + 3*data3.sd)) {
+    data3.remove <- c(data3.remove,n)
+  } else if (n < (data3.mean - 3*data3.sd)) {
+    data3.remove <- c(data3.remove,n)
+  }
+}
+
+# Given the size of the data set and its makeup, perhaps choosing
+# an arbitrary range that seems reasonable is a better method:
+data3.clean <- data3[data3 < data3.mean + 10 & data3 > data3.mean - 10]
+
+# 3.b
+degrees <- c('BS', 'MS', 'PhD', 'HS', 'Bachelors', 'Masters', 'High School', 'BS', 'MS', 'MS')
+
+for (i in 1:length(degrees)) {
+  if (degrees[i] == "Bachelors") {
+    degrees[i] <- "BS"
+  } else if (degrees[i] == "Masters") {
+    degrees[i] <- "MS"
+  } else if (degrees[i] == "High School") {
+    degrees[i] <- "HS"
+  }
+}
+
+# 3.c.a
+data3c <- c(-1, 1, 5, 1, 1, 17, -3, 1, 1, 3)
+data3c.minMaxNormal <- (data3c - min(data3c))/(max(data3c)-min(data3c))
+
+# 3.c.b
+data3c.zScore <- (data3c - mean(data3c))/sd(data3c)
+
+# 3.d
+data3d.rgb <- c('Red', 'Green', 'Blue', 'Blue', 'Blue', 'Blue', 'Blue', 'Red', 'Green', 'Blue')
+data3d.r <- ifelse(data3d.rgb=="Red",1,0)
+data3d.g <- ifelse(data3d.rgb=="Green",1,0)
+data3d.b <- ifelse(data3d.rgb=="Blue",1,0)
+
+# 3.e.a
+data3e <- c(3,4,4,5,5,5,5,5,5,5,5,6,6,6,6,6,7,7,7,7,8,8,9,12,23,23,25,81)
+data3e.r1 <- c(min(data3e),min(data3e)+(max(data3e)-min(data3e))/3-1)
+data3e.r2 <- c(data3e.r1[2]+1,data3e.r1[2]+1+(max(data3e)-min(data3e))/3-1)
+data3e.r3 <- c(data3e.r2[2]+1,data3e.r2[2]+1+(max(data3e)-min(data3e))/3)
+
+eqRangeBucket1 <- data3e[data3e >= data3e.r1[1] & data3e <= data3e.r1[2]]
+eqRangeBucket2 <- data3e[data3e >= data3e.r2[1] & data3e <= data3e.r2[2]]
+eqRangeBucket3 <- data3e[data3e >= data3e.r3[1] & data3e <= data3e.r3[2]]
+
+# 3.e.b
+eqAmtBucket1 <- sort(data3e)[1:round(length(data3e)/3)]
+eqAmtBucket2 <- sort(data3e)[((round(length(data3e)/3))+1):(2*round(length(data3e)/3)+1)]
+eqAmtBucket3 <- sort(data3e)[(2*round(length(data3e)/3)+2):(3*round(length(data3e)/3)+1)]
+
