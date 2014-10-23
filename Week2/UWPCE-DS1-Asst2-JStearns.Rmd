@@ -1,0 +1,259 @@
+---
+title: "UWPCE-DS1-Asst2-JStearns.Rmd"
+author: "Jim Stearns"
+date: "18 October 2014"
+fontsize: 14pt
+---
+
+Assignment 2, Introduction to Data Science, UW PCE, Fall 2014
+====
+```{r echo=FALSE}
+#setwd("~/GoogleDrive/Learning/Courses/UWPCE-DataScience/Course1_Intro/Assignments")
+```
+
+> For all assignment items, use the patterns described in:
+>
+> * DataScience02a.R
+> * DataScience02b.R
+> * DataScience02c.R
+
+1. Using R Data Preparation
+====
+a. Get Indian Liver Patient Dataset:
+----
+```{r}
+url <- "http://archive.ics.uci.edu/ml/machine-learning-databases/00225/Indian%20Liver%20Patient%20Dataset%20(ILPD).csv"
+ILPD.df<-read.csv(url,header=FALSE,stringsAsFactors=FALSE)
+str(ILPD.df)
+```
+b. Get the column headers
+----
+> From http://archive.ics.uci.edu/ml/datasets/ILPD+(Indian+Liver+Patient+Dataset)#
+
+The link is an HTML page that contains a listing of the attributes.
+The HTML is primitive - not even a table, just a paragraph with <br>eaks.
+
+So I got the information manually. Copied and pasted, here it is:
+
+Attribute Information:
+
+1. Age  Age of the patient 
+2. Gender	Gender of the patient 
+3. TB	Total Bilirubin 
+4. DB	Direct Bilirubin 
+5. Alkphos Alkaline Phosphotase 
+6. Sgpt Alamine Aminotransferase 
+7. Sgot Aspartate Aminotransferase 
+8. TP	Total Protiens 
+9. ALB	Albumin 
+10. A/G Ratio	Albumin and Globulin Ratio 
+11. Selector field used to split the data into two sets (labeled by the experts) 
+
+More detail on the 11th field, Selector: "Selector is a class label used to divide into groups(liver patient or not)."
+
+c. Manually construct a vector of column names.
+----
+```{r}
+headers <- c("Age", "Gender", "TB", "DB", "Alkphos", "Sgpt", "Sgot", "TP", "ALB", "A/G Ratio", "Selector") 
+```
+Most of the names provided by the study authors are valid R names.
+But the slash and space in "A/G Ratio" look iffy. 
+Use an R method that coerces names to syntactically valid names.
+```{r}
+valid_headers <- make.names(headers)
+valid_headers
+```
+d. Associate names with the dataframe
+----
+```{r}
+names(ILPD.df) <- valid_headers
+str(ILPD.df)
+```
+
+2.Using R Data Exploration on ILPD
+====
+a. Use **head(ILPD)** to view the first six rows.
+----
+```{r}
+head(ILPD.df, n=6)
+```
+b. Determine the mean, median, and standard deviation of each column
+----
+The Gender column is of type character ("Male", "Female"). Let's convert it to an integer
+so that mean etc calculations can be performed on it.
+```{r}
+ILPD.df$Gender <- as.integer(as.factor(ILPD.df$Gender))
+str(ILPD.df)
+# R is 1-relative, so the values assigned here are 1 and 2. Make that 0 (Female) and 1 (Male)
+ILPD.df$Gender <- ILPD.df$Gender - 1
+str(ILPD.df)
+```
+First pass at calculations:
+```{r}
+sapply(ILPD.df, mean)
+sapply(ILPD.df, median)
+sapply(ILPD.df, sd)
+```
+A.G.Ratio returns a NA, which usually indicates at least one value is NA.
+```{r}
+print(sprintf("The number of NA values in A.G.Ratio = %d", sum(is.na(ILPD.df$A.G.Ratio))))
+```
+Finesse the NA problem by specifying NA values are to be removed before the mean et al 
+are calculated:
+```{r}
+sapply(ILPD.df, mean, na.rm=TRUE)
+sapply(ILPD.df, median, na.rm=TRUE)
+sapply(ILPD.df, sd, na.rm=TRUE)
+```
+c. What does **na.rm=TRUE** do in sd(x, **na.rm=TRUE**)?
+----
+Skip rows that have a N/A value (applied above).
+
+d. Create Histograms (**hist**) for each column where possible.
+----
+```{r}
+str(ILPD.df)
+par(mfrow=c(1,1))
+for (col in seq(1, ncol(ILPD.df))) {
+    xname <- names(ILPD.df)[col]
+    hist(ILPD.df[,col], xlab=xname, main=paste("Histogram of", xname))
+}
+```
+
+e. Use the **plot(ILPD)** function to present a general overview of the data.
+----
+```{r}
+par(mfrow=c(1,1))
+plot(ILPD.df)
+# And plot to a PDF file so one can blow it up easily:
+pdf("PlotILPD.pdf", width=7, height=7)
+plot(ILPD.df)
+dev.off()
+```
+
+> You want to see a matrix of many plots.
+> Your efforts may be thwarted because the Gender column is not numeric.
+> You can skip the Gender column, or you can turn the gender column into a numeric column.
+> You might need help from a fellow student, the LinkedIn group, or me.
+> Look at the plots and answer:
+
+e-a. What can you say about the data?
+----
+
+* Three pairs of predictors show a strong correlation - noted below.
+* While 75% of the subjects are male, despite this weighting of male subjects, men are more likely to have high concentrations of Sgpt (Alamine Aminotransferase).
+* The plot of two bi-modal variables - Gender and Selection - yield 4 unhelpfully similar arcs in the four corners. Whether any correlation exists between gender and status as a liver patient requires further analysis.
+
+e-b. How can you tell if a vector contains continuous numbers or binary data?
+----
+Binary data is bimodal. Continuous number are more distributed. Gender and Selector are bimodal, and binary.
+
+e-c. How can you tell if two vectors are correlated?
+----
+On a 2D plot of the two vectors, are the observations roughly linear?
+
+Looking at the plot output, one can see that TB:DB, TP:ALB and ALB:A.G.Ratio seem to be correlated.
+
+3. Using Data Preparation Concepts
+====
+
+> Create examples of the following data preparation processes in R:
+
+a. Remove Outliers
+----
+```{r}
+testList <- c(-1, 1, 5, 1, 1, 17, -3, 1, 1, 3)
+highLimit <- mean(testList) + 2*sd(testList)
+lowLimit <- mean(testList) - 2*sd(testList)
+goodFlag <- (testList < highLimit) & (testList > lowLimit)
+
+print(sprintf("List with outliers removed: %s", paste(testList[goodFlag], collapse=", ")))
+print(sprintf("Outliers removed: %s", paste(testList[!goodFlag], collapse=", ")))
+```
+
+b. Relabel 
+----
+```{r}
+degree <- c('BS', 'MS', 'PhD', 'HS', 'Bachelors', 'Masters', 'High School', 'BS', 'MS', 'MS')
+str(degree)
+highSchoolDegrees=c("High School", "HS")
+collegeDegrees=c("BS", "Bachelors")
+graduateDegrees=c("MS", "PhD", "Masters")
+degree[degree %in% highSchoolDegrees] <- "High School"
+degree[degree %in% collegeDegrees] <- "College"
+degree[degree %in% graduateDegrees ] <- "Graduate"
+degree
+```
+c. Normalize: Min-Max and Z-score
+----
+```{r}
+testVector <- c(-1, 1, 5, 1, 1, 17, -3, 1, 1, 3)
+
+minMaxNormalize <- function(v) {
+    minv <- min(v, na.rm=TRUE)
+    maxv <- max(v, na.rm=TRUE)
+    normv <- v - minv
+    normv <- normv / (maxv - minv)
+    return(normv)
+}
+
+zScoreNormalize <- function(v) {
+    meanv <- mean(v, na.rm=TRUE)
+    sdv <- sd(v, na.rm=TRUE)
+    normv <- v - meanv
+    normv <- normv / sdv
+    return(normv)
+}
+
+testVectorMinMaxNormalized <- minMaxNormalize(testVector)
+print(sprintf("Vector Min-Max normalized = %s", 
+              paste(testVectorMinMaxNormalized, collapse=", ")))
+
+testVectorZScoreNormalized <- zScoreNormalize(testVector)
+print(sprintf("Vector Z-score normalized values (to two significant digits) = %s", 
+               paste(format(testVectorZScoreNormalized, digits=1), collapse=", ")))
+```
+d. Binarize
+----
+```{r}
+color <- c('Red', 'Green', 'Blue', 'Blue', 'Blue', 'Blue', 'Blue', 'Red', 'Green', 'Blue')
+
+isRed <- color == 'Red' 
+isGreen <- color == 'Green'
+isBlue <- color == 'Blue'
+
+isRed <- as.numeric(isRed)
+isGreen <- as.numeric(isGreen)
+isBlue <- as.numeric(isBlue)
+isRed
+isGreen
+isBlue
+
+# Make sure all vector elements have been accounted for - once
+allThree <- isRed + isGreen + isBlue
+allOnes <- rep(1, length(allThree))
+allAccountedFor <- sum(allThree == allOnes) == length(allOnes)
+print(sprintf("All vector elements accounted for - once == %s", allAccountedFor))
+```
+e. Discretize: three equal ranges, three equal amounts
+----
+```{r}
+v <- c(3,4,4,5,5,5,5,5,5,5,5,6,6,6,6,6,7,7,7,7,8,8,9,12,23, 23, 25, 81)
+
+NBINS = 3
+range <- max(v) - min(v)
+binWidth <- range / NBINS
+bin2Min <- binWidth
+bin3Min <- 2*binWidth
+
+range
+binWidth
+bin2Min
+bin3Min
+
+vDiscretized <- rep(NA, length(v))
+vDiscretized[v < bin2Min] <- "Low"
+vDiscretized[v >= bin2Min & v < bin3Min] <- "Medium"
+vDiscretized[v >= bin3Min] <- "High"
+print(sprintf("Vector discretized into three bins: %s", paste(vDiscretized, collapse=", ")))
+```
